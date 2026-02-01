@@ -64,8 +64,12 @@ func main() {
 		http.ServeFile(w, r, "./frontend/dist/index.html")
 	})
 	// start the server
-	log.Println("Server starting on : 8080")
-	err := http.ListenAndServe(":8080", nil)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // fallback for local development
+	}
+	log.Println("Server starting on port:", port)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal("Listen and serve:", err)
 	}
