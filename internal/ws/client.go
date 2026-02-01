@@ -128,9 +128,10 @@ func (c *Client) ReadPump() {
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, username string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
+	log.Printf("✅ WebSocket connected: %s", username)
 	client := &Client{Hub: hub, Conn: conn, Send: make(chan []byte, 256), Username: username}
 	client.Hub.Register <- client
 	//allow collection of memory by doing this in a new goroutine
@@ -141,5 +142,5 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, username string) 
 type Message struct {
 	Content  string    `bson:"content" json:"content"`
 	Username string    `bson:"username" json:"username"`
-	SendAt   time.Time `bson:"send_at" json:"sencd_at"`
+	SendAt   time.Time `bson:"send_at" json:"send_at"`
 }
