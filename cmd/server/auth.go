@@ -39,8 +39,9 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Username likely taken", http.StatusConflict)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("User registered successfully"))
+	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 }
 
 // login checks credentials
@@ -74,5 +75,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Success
-	w.Write([]byte("Login successful"))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Login successful", "username": dbUser.Username})
 }

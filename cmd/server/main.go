@@ -51,7 +51,15 @@ func main() {
 	http.HandleFunc("/history", handleHistory)
 	http.HandleFunc("/register", handleRegister)
 	http.HandleFunc("/login", handleLogin)
-	http.Handle("/", http.FileServer(http.Dir("./static")))
+
+	// Serve auth.html as the landing page
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "./static/auth.html")
+			return
+		}
+		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
+	})
 	// start the server
 	log.Println("Server starting on : 8080")
 	err := http.ListenAndServe(":8080", nil)
