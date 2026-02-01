@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -110,8 +111,15 @@ func (c *Client) ReadPump() {
 			log.Println("Message saved to db")
 		}
 
-		// send the message to the hub broadcast to everyone
-		c.Hub.Broadcast <- textBytes
+		// Marshal the message object to JSON before broadcasting
+		msgJSON, err := json.Marshal(msgObj)
+		if err != nil {
+			log.Println("error marshaling message:", err)
+			continue
+		}
+
+		// send the complete message object to the hub broadcast to everyone
+		c.Hub.Broadcast <- msgJSON
 	}
 
 }

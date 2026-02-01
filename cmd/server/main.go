@@ -52,13 +52,14 @@ func main() {
 	http.HandleFunc("/register", handleRegister)
 	http.HandleFunc("/login", handleLogin)
 
-	// Serve auth.html as the landing page
+	// Serve React build as the landing page
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "./static/auth.html")
+			http.ServeFile(w, r, "./frontend/dist/index.html")
 			return
 		}
-		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
+		// Serve other static files from dist
+		http.FileServer(http.Dir("./frontend/dist")).ServeHTTP(w, r)
 	})
 	// start the server
 	log.Println("Server starting on : 8080")
