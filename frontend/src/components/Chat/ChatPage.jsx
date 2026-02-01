@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import useWebSocket from '../../hooks/useWebSocket';
 import { getHistory } from '../../utils/api';
 import Header from './Header';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
+import AnimatedBackground from '../UI/AnimatedBackground';
 
 function ChatPage({ user, onLogout }) {
     const [messages, setMessages] = useState([]);
     const messagesEndRef = useRef(null);
 
     const { connected, sendMessage } = useWebSocket(user, (message) => {
-        // Handle incoming message
         setMessages((prev) => [...prev, { ...message, isNew: true }]);
     });
 
     useEffect(() => {
-        // Load message history
         const loadHistory = async () => {
             try {
                 const history = await getHistory();
@@ -29,7 +29,6 @@ function ChatPage({ user, onLogout }) {
     }, []);
 
     useEffect(() => {
-        // Scroll to bottom when new messages arrive
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
@@ -40,13 +39,27 @@ function ChatPage({ user, onLogout }) {
     };
 
     return (
-        <div className="chat-page">
-            <Header user={user} connected={connected} onLogout={onLogout} />
+        <div className="relative flex flex-col h-screen overflow-hidden">
+            <AnimatedBackground />
 
-            <div className="chat-main">
-                <MessageList messages={messages} messagesEndRef={messagesEndRef} />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="glass relative z-10 flex flex-col h-full m-4 rounded-2xl shadow-2xl overflow-hidden border border-white/20"
+            >
+                <Header user={user} connected={connected} onLogout={onLogout} />
+
+                <div className="flex-1 overflow-hidden relative">
+                    <MessageList
+                        messages={messages}
+                        messagesEndRef={messagesEndRef}
+                        currentUser={user}
+                    />
+                </div>
+
                 <MessageInput onSend={handleSendMessage} disabled={!connected} />
-            </div>
+            </motion.div>
         </div>
     );
 }
