@@ -165,6 +165,7 @@
         /* ===== HEADER ===== */
         .chat-header {
             background: var(--bg-glass);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-xl);
@@ -271,6 +272,7 @@
         .messages-container {
             flex: 1;
             background: var(--bg-glass);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-xl);
@@ -479,6 +481,7 @@
         /* ===== INPUT AREA ===== */
         .input-container {
             background: var(--bg-glass);
+            -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-xl);
@@ -702,8 +705,14 @@
 
     <script>
         // ===== CONFIGURATION =====
-        const WS_URL = 'ws://localhost:8080/ws';
-        const HISTORY_URL = 'http://localhost:8080/history';
+        const DEFAULT_HOST = 'localhost:8080';
+        const host = window.location.host || DEFAULT_HOST;
+        const isSecure = window.location.protocol === 'https:';
+        const httpProtocol = isSecure ? 'https:' : 'http:';
+        const wsProtocol = isSecure ? 'wss:' : 'ws:';
+
+        const WS_URL = `${wsProtocol}//${host}/ws`;
+        const HISTORY_URL = `${httpProtocol}//${host}/history`;
 
         // ===== DOM ELEMENTS =====
         const messagesList = document.getElementById('messagesList');

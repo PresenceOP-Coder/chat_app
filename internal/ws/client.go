@@ -117,13 +117,13 @@ func (c *Client) ReadPump() {
 }
 
 // / servews handles websocket request from the peer
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, username string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{Hub: hub, Conn: conn, Send: make(chan []byte, 256)}
+	client := &Client{Hub: hub, Conn: conn, Send: make(chan []byte, 256), Username: username}
 	client.Hub.Register <- client
 	//allow collection of memory by doing this in a new goroutine
 	go client.WritePump()
@@ -131,6 +131,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 type Message struct {
-	Content string    `bson:"content" json:"content"`
-	SendAt  time.Time `bson:"send_at" json:"sencd_at"`
+	Content  string    `bson:"content" json:"content"`
+	Username string    `bson:"username" json:"username"`
+	SendAt   time.Time `bson:"send_at" json:"sencd_at"`
 }
