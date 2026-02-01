@@ -7,7 +7,6 @@
     <meta name="description" content="Modern real-time chat application with stunning animations">
     <title>ChatFlow - Real-time Messaging</title>
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -652,16 +651,13 @@
 </head>
 
 <body>
-    <!-- Animated Background -->
     <div class="animated-bg">
         <div class="gradient-orb orb-1"></div>
         <div class="gradient-orb orb-2"></div>
         <div class="gradient-orb orb-3"></div>
     </div>
 
-    <!-- Main Chat Container -->
     <div class="chat-container">
-        <!-- Header -->
         <header class="chat-header">
             <div class="header-left">
                 <div class="app-logo">💬</div>
@@ -673,11 +669,9 @@
             </div>
         </header>
 
-        <!-- Messages Area -->
         <div class="messages-container">
             <ul class="messages-list" id="messagesList"></ul>
 
-            <!-- Typing Indicator -->
             <div class="typing-indicator" id="typingIndicator">
                 <div class="message-avatar" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
                     👤
@@ -690,7 +684,6 @@
             </div>
         </div>
 
-        <!-- Input Area -->
         <div class="input-container">
             <div class="input-wrapper">
                 <input type="text" id="messageInput" class="message-input" placeholder="Type your message..."
@@ -704,15 +697,33 @@
     </div>
 
     <script>
-        // ===== CONFIGURATION =====
-        const DEFAULT_HOST = 'localhost:8080';
-        const host = window.location.host || DEFAULT_HOST;
-        const isSecure = window.location.protocol === 'https:';
-        const httpProtocol = isSecure ? 'https:' : 'http:';
-        const wsProtocol = isSecure ? 'wss:' : 'ws:';
+        // ===== CONFIGURATION (THE FIX IS HERE) =====
+        
+        // 1. Ask for Username so the backend knows who you are
+        let currentUser = localStorage.getItem("chat_user");
+        if (!currentUser) {
+            currentUser = prompt("Enter your username for the chat:", "Guest");
+            if (!currentUser) currentUser = "Guest";
+            localStorage.setItem("chat_user", currentUser);
+        }
 
-        const WS_URL = `${wsProtocol}//${host}/ws`;
-        const HISTORY_URL = `${httpProtocol}//${host}/history`;
+        // 2. Set the Backend URL to your Render deployment
+        const BACKEND_HOST = 'chat-app-pcnq.onrender.com';
+        
+        let API_URL = '';
+        let WS_URL = '';
+
+        // Logic: If we are on localhost, connect to Render. If we are ON Render, use relative path.
+        if (window.location.hostname === 'localhost' || window.location.protocol === 'file:') {
+            API_URL = `https://${BACKEND_HOST}`;
+            WS_URL = `wss://${BACKEND_HOST}/ws?username=${currentUser}`;
+        } else {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            API_URL = window.location.origin;
+            WS_URL = `${protocol}//${window.location.host}/ws?username=${currentUser}`;
+        }
+
+        const HISTORY_URL = `${API_URL}/history`;
 
         // ===== DOM ELEMENTS =====
         const messagesList = document.getElementById('messagesList');
@@ -755,19 +766,17 @@
         /**
          * Get user initials from message
          */
-        function getUserInitials(message) {
-            const words = message.trim().split(' ');
-            if (words.length >= 2) {
-                return (words[0][0] + words[1][0]).toUpperCase();
-            }
-            return message.substring(0, 2).toUpperCase();
+        function getUserInitials(username) {
+            // Use the username if available, otherwise fallback
+            if(!username) return "?";
+            return username.substring(0, 2).toUpperCase();
         }
 
         /**
          * Format timestamp
          */
         function formatTime(date) {
-            return date.toLocaleTimeString('en-US', {
+            return new Date(date).toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
@@ -787,12 +796,29 @@
         /**
          * Create message element
          */
-        function createMessageElement(content, isHistory = false) {
+        function createMessageElement(msgObj, isHistory = false) {
             const li = document.createElement('li');
             li.className = `message-item ${isHistory ? 'history' : 'new'}`;
 
-            const initials = getUserInitials(content);
-            const avatarColor = generateAvatarColor(content);
+            // Parse Username and Content
+            // Expected format from server: "Username: MessageContent" OR JSON object
+            // If server sends raw text "User: Hello", we parse it.
+            let username = "User";
+            let content = msgObj; // Default if string
+
+            if (typeof msgObj === 'object') {
+                username = msgObj.username || "User";
+                content = msgObj.content || "";
+            } else if (typeof msgObj === 'string' && msgObj.includes(":")) {
+                const parts = msgObj.split(": ");
+                if(parts.length > 1) {
+                   username = parts[0];
+                   content = parts.slice(1).join(": ");
+                }
+            }
+
+            const initials = getUserInitials(username);
+            const avatarColor = generateAvatarColor(username);
             const timestamp = formatTime(new Date());
 
             // Add staggered animation delay
@@ -800,12 +826,12 @@
             messageCount++;
 
             li.innerHTML = `
-                <div class="message-avatar" style="background: ${avatarColor};">
+                <div class="message-avatar" style="background: ${avatarColor};" title="${username}">
                     ${initials}
                 </div>
                 <div class="message-content">
                     <div class="message-bubble">
-                        <div class="message-text">${escapeHtml(content)}</div>
+                        <div class="message-text"><strong>${escapeHtml(username)}</strong><br>${escapeHtml(content)}</div>
                     </div>
                     <div class="message-time">${timestamp}</div>
                 </div>
@@ -818,6 +844,7 @@
          * Escape HTML to prevent XSS
          */
         function escapeHtml(text) {
+            if(!text) return "";
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
@@ -840,7 +867,7 @@
         function updateStatus(connected) {
             if (connected) {
                 statusDot.classList.add('connected');
-                statusText.textContent = 'Connected';
+                statusText.textContent = `Connected as ${currentUser}`;
             } else {
                 statusDot.classList.remove('connected');
                 statusText.textContent = 'Disconnected';
@@ -882,15 +909,13 @@
             setTimeout(() => {
                 sendButton.style.transform = '';
             }, 150);
-
-            // Show typing indicator briefly
-            showTypingIndicator();
         }
 
         /**
          * Initialize WebSocket connection
          */
         function initWebSocket() {
+            console.log("Connecting to:", WS_URL);
             ws = new WebSocket(WS_URL);
 
             ws.onopen = () => {
@@ -900,7 +925,14 @@
 
             ws.onmessage = (event) => {
                 console.log('📨 Message received:', event.data);
-                addMessage(event.data, false);
+                // Handle JSON if backend sends JSON, otherwise string
+                let data = event.data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch(e) {
+                    // It's a string, use as is
+                }
+                addMessage(data, false);
 
                 // Hide typing indicator when message arrives
                 typingIndicator.classList.remove('active');
@@ -939,7 +971,7 @@
                 console.log(`📚 Loaded ${messages.length} messages from history`);
 
                 messages.forEach(msg => {
-                    addMessage(msg.content, true);
+                    addMessage(msg, true);
                 });
 
             } catch (error) {

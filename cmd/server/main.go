@@ -51,7 +51,7 @@ func main() {
 	http.HandleFunc("/history", handleHistory)
 	http.HandleFunc("/register", handleRegister)
 	http.HandleFunc("/login", handleLogin)
-
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 	// start the server
 	log.Println("Server starting on : 8080")
 	err := http.ListenAndServe(":8080", nil)
