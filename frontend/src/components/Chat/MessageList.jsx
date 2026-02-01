@@ -28,7 +28,16 @@ function MessageList({ messages, messagesEndRef, currentUser }) {
                                 )}
                                 <p className="leading-relaxed">{msg.content}</p>
                                 <p className={`text-[10px] mt-1 text-right opacity-60 ${isOwnMessage ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
-                                    {new Date(msg.send_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {(() => {
+                                        try {
+                                            const date = new Date(msg.send_at);
+                                            return isNaN(date.getTime())
+                                                ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                        } catch (e) {
+                                            return '';
+                                        }
+                                    })()}
                                 </p>
                             </div>
                         </motion.div>

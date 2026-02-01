@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   /* Light Mode Variables */
   --bg-primary: #f8fafc;
