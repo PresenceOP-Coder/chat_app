@@ -52,14 +52,16 @@ func main() {
 	http.HandleFunc("/register", handleRegister)
 	http.HandleFunc("/login", handleLogin)
 
-	// Serve React build as the landing page
+	// Serve static files and React SPA
+	fs := http.FileServer(http.Dir("./frontend/dist"))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "./frontend/dist/index.html")
+		// Serve static assets directly
+		if r.URL.Path != "/" && (len(r.URL.Path) > 7 && r.URL.Path[:7] == "/assets") {
+			fs.ServeHTTP(w, r)
 			return
 		}
-		// Serve other static files from dist
-		http.FileServer(http.Dir("./frontend/dist")).ServeHTTP(w, r)
+		// For all other routes, serve index.html to support client-side routing
+		http.ServeFile(w, r, "./frontend/dist/index.html")
 	})
 	// start the server
 	log.Println("Server starting on : 8080")

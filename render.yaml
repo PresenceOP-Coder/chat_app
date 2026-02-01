@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: go-chat-server
+    runtime: go
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: ./go-chat-server
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+    autoDeploy: true
