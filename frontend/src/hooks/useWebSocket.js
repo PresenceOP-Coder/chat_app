@@ -5,6 +5,13 @@ function useWebSocket(username, onMessage) {
     const wsRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
 
+    const onMessageRef = useRef(onMessage);
+
+    // Update ref when onMessage changes, without triggering reconnection
+    useEffect(() => {
+        onMessageRef.current = onMessage;
+    }, [onMessage]);
+
     const getWebSocketUrl = useCallback(() => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
@@ -26,7 +33,9 @@ function useWebSocket(username, onMessage) {
             console.log('📨 Message received:', event.data);
             try {
                 const data = JSON.parse(event.data);
-                onMessage(data);
+                if (onMessageRef.current) {
+                    onMessageRef.current(data);
+                }
             } catch (e) {
                 // If not JSON, treat as plain text (backward compatibility)
                 console.warn('Received non-JSON message:', event.data);
@@ -36,7 +45,9 @@ function useWebSocket(username, onMessage) {
                     content: parts.slice(1).join(': ') || event.data,
                     send_at: new Date(),
                 };
-                onMessage(messageObj);
+                if (onMessageRef.current) {
+                    onMessageRef.current(messageObj);
+                }
             }
         };
 
@@ -57,7 +68,7 @@ function useWebSocket(username, onMessage) {
         };
 
         wsRef.current = ws;
-    }, [getWebSocketUrl, onMessage]);
+    }, [getWebSocketUrl]); // Removed onMessage from dependencies
 
     useEffect(() => {
         connect();
