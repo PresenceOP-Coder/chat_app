@@ -267,6 +267,35 @@
             }
         }
 
+        /* ===== LOGOUT BUTTON ===== */
+        .logout-button {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background: var(--bg-glass-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .logout-button:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--error);
+            color: var(--error);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .logout-button:active {
+            transform: translateY(0);
+        }
+
         /* ===== MESSAGES AREA ===== */
         .messages-container {
             flex: 1;
@@ -663,9 +692,15 @@
                 <div class="app-logo">💬</div>
                 <h1 class="app-title">ChatFlow</h1>
             </div>
-            <div class="connection-status" id="status">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">Connecting...</span>
+            <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                <div class="connection-status" id="status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+                <button class="logout-button" id="logoutButton">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
             </div>
         </header>
 
@@ -698,18 +733,16 @@
 
     <script>
         // ===== CONFIGURATION (THE FIX IS HERE) =====
-        
-        // 1. Ask for Username so the backend knows who you are
+
+        // Check if user is logged in, otherwise redirect to auth page
         let currentUser = localStorage.getItem("chat_user");
         if (!currentUser) {
-            currentUser = prompt("Enter your username for the chat:", "Guest");
-            if (!currentUser) currentUser = "Guest";
-            localStorage.setItem("chat_user", currentUser);
+            window.location.href = '/';
         }
 
         // 2. Set the Backend URL to your Render deployment
         const BACKEND_HOST = 'chat-app-pcnq.onrender.com';
-        
+
         let API_URL = '';
         let WS_URL = '';
 
@@ -768,7 +801,7 @@
          */
         function getUserInitials(username) {
             // Use the username if available, otherwise fallback
-            if(!username) return "?";
+            if (!username) return "?";
             return username.substring(0, 2).toUpperCase();
         }
 
@@ -811,9 +844,9 @@
                 content = msgObj.content || "";
             } else if (typeof msgObj === 'string' && msgObj.includes(":")) {
                 const parts = msgObj.split(": ");
-                if(parts.length > 1) {
-                   username = parts[0];
-                   content = parts.slice(1).join(": ");
+                if (parts.length > 1) {
+                    username = parts[0];
+                    content = parts.slice(1).join(": ");
                 }
             }
 
@@ -844,7 +877,7 @@
          * Escape HTML to prevent XSS
          */
         function escapeHtml(text) {
-            if(!text) return "";
+            if (!text) return "";
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
@@ -929,7 +962,7 @@
                 let data = event.data;
                 try {
                     data = JSON.parse(event.data);
-                } catch(e) {
+                } catch (e) {
                     // It's a string, use as is
                 }
                 addMessage(data, false);
@@ -996,6 +1029,21 @@
 
         messageInput.addEventListener('blur', () => {
             messageInput.parentElement.style.transform = '';
+        });
+
+        // Logout button
+        const logoutButton = document.getElementById('logoutButton');
+        logoutButton.addEventListener('click', () => {
+            // Close WebSocket connection
+            if (ws) {
+                ws.close();
+            }
+
+            // Clear localStorage
+            localStorage.removeItem('chat_user');
+
+            // Redirect to auth page
+            window.location.href = '/';
         });
 
         // ===== INITIALIZATION =====
