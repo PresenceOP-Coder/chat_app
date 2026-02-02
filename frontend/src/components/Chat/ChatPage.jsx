@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import useWebSocket from '../../hooks/useWebSocket';
 import { getHistory } from '../../utils/api';
 import Header from './Header';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import AnimatedBackground from '../UI/AnimatedBackground';
 
 function ChatPage({ user, onLogout }) {
     const [messages, setMessages] = useState([]);
@@ -39,28 +37,24 @@ function ChatPage({ user, onLogout }) {
     };
 
     return (
-        <div className="relative flex flex-col h-screen overflow-hidden">
-            <AnimatedBackground />
+        <>
+            <div className="animated-bg">
+                <div className="glow-orb glow-orb-1" />
+                <div className="glow-orb glow-orb-2" />
+            </div>
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="glass relative z-10 flex flex-col h-full m-4 rounded-2xl shadow-2xl overflow-hidden border border-white/20"
-            >
-                <Header user={user} connected={connected} onLogout={onLogout} />
-
-                <div className="flex-1 overflow-hidden relative">
+            <div className="chat-container">
+                <div className="chat-inner">
+                    <Header user={user} connected={connected} onLogout={onLogout} />
                     <MessageList
                         messages={messages}
                         messagesEndRef={messagesEndRef}
                         currentUser={user}
                     />
+                    <MessageInput onSend={handleSendMessage} disabled={!connected} />
                 </div>
-
-                <MessageInput onSend={handleSendMessage} disabled={!connected} />
-            </motion.div>
-        </div>
+            </div>
+        </>
     );
 }
 
